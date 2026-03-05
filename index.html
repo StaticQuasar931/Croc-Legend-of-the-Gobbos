@@ -1,90 +1,427 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Croc: Legend of the Gobbos</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Croc: Legend of the Gobbos (PS1)</title>
 
-<style>
-html,body{
-  margin:0;
-  height:100%;
-  background:#000;
-  overflow:hidden;
-}
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
 
-#game{
-  width:100vw;
-  height:100vh;
-}
-</style>
+    #game {
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+    }
+
+    /* Loading overlay */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(1200px 800px at 50% 20%, rgba(70,100,255,0.16), rgba(0,0,0,0.92));
+      z-index: 9999;
+    }
+
+    #panel {
+      width: min(720px, 92vw);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 18px 18px 14px 18px;
+      box-shadow: 0 18px 70px rgba(0,0,0,0.6);
+    }
+
+    #titleRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    #title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      color: #fff;
+      margin: 0;
+    }
+
+    #status {
+      font-size: 13px;
+      color: rgba(255,255,255,0.86);
+      margin: 10px 0 10px 0;
+      line-height: 1.35;
+    }
+
+    #barWrap {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    #bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95));
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    #small {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.45;
+    }
+
+    #small code {
+      background: rgba(255,255,255,0.08);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+
+    #btnRow {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      user-select: none;
+    }
+    .btn:hover { background: rgba(255,255,255,0.12); }
+
+    #hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.70);
+    }
+  </style>
 </head>
 
 <body>
+  <div id="game"></div>
 
-<div id="game"></div>
+  <div id="overlay" aria-live="polite">
+    <div id="panel">
+      <div id="titleRow">
+        <h1 id="title">Loading Croc: Legend of the Gobbos (PS1)</h1>
+      </div>
 
-<script>
+      <div id="status">
+        Preparing the game files. Track 1 is split into multiple parts due to file-size limits,
+        so this page has to download and stitch it together before the emulator can boot.
+      </div>
 
-EJS_player = "#game";
-EJS_core = "psx";
-EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+      <div id="barWrap"><div id="bar"></div></div>
 
-async function combineTrack01(){
+      <div id="small">
+        If controls feel “dead” during loading, that is normal. The game will respond after the disc is mounted.<br>
+        Tip: after it starts, click the game once so the keyboard focuses the emulator.<br>
+        Keyboard: arrows = dpad, Z/X = buttons, Enter = start, Shift = select (varies by core).
+      </div>
 
-  const parts = [
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
-  ];
+      <div id="btnRow">
+        <button class="btn" id="retryBtn" style="display:none;">Retry</button>
+        <button class="btn" id="skipCacheBtn" style="display:none;">Skip pre-cache (not recommended)</button>
+      </div>
 
-  let buffers = [];
+      <div id="hint"></div>
+    </div>
+  </div>
 
-  for(const p of parts){
-    const r = await fetch(p);
-    buffers.push(await r.arrayBuffer());
-  }
+  <script>
+    // Basic leave warning
+    window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
-  const size = buffers.reduce((a,b)=>a+b.byteLength,0);
-  const combined = new Uint8Array(size);
+    // ======== YOU MUST MATCH THESE NAMES EXACTLY ========
+    const CUE_FILE = "Croc - Legend of the Gobbos (Europe).cue";
+    const TRACK01_VIRTUAL = "Croc - Legend of the Gobbos (Europe) (Track 01).bin";
 
-  let offset = 0;
-  for(const b of buffers){
-    combined.set(new Uint8Array(b), offset);
-    offset += b.byteLength;
-  }
+    // Update this list to match your real split parts count.
+    // From your screenshot, Track 01 has .001 through .011
+    const TRACK01_PARTS = [
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
+      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
+    ];
 
-  return combined.buffer;
-}
+    // Optional BIOS for better PS1 compatibility:
+    // Put scph5502.bin in the same folder and set BIOS_FILE to that.
+    const BIOS_FILE = ""; // "scph5502.bin"
 
-async function start(){
+    // Cache name for the split parts
+    const CACHE_NAME = "croc-track01-parts-v1";
 
-  const track01 = await combineTrack01();
+    const overlay = document.getElementById("overlay");
+    const statusEl = document.getElementById("status");
+    const hintEl = document.getElementById("hint");
+    const barEl = document.getElementById("bar");
+    const retryBtn = document.getElementById("retryBtn");
+    const skipCacheBtn = document.getElementById("skipCacheBtn");
 
-  const file = new File([track01], "Croc - Legend of the Gobbos (Europe) (Track 01).bin");
+    function setStatus(msg) { statusEl.textContent = msg; }
+    function setHint(msg) { hintEl.textContent = msg || ""; }
+    function setProgress(p) {
+      const clamped = Math.max(0, Math.min(1, p));
+      barEl.style.width = (clamped * 100).toFixed(1) + "%";
+    }
 
-  EJS_gameUrl = "Croc - Legend of the Gobbos (Europe).cue";
+    function showFailure(msg) {
+      setStatus(msg);
+      setHint("If you changed filenames, the .cue and files must match exactly. Then refresh.");
+      retryBtn.style.display = "inline-block";
+      skipCacheBtn.style.display = "inline-block";
+    }
 
-  window.EJS_files = {
-    "Croc - Legend of the Gobbos (Europe) (Track 01).bin": file
-  };
+    retryBtn.onclick = () => location.reload();
+    skipCacheBtn.onclick = async () => {
+      setHint("Skipping pre-cache. Loading may be slower and may fail on weak connections.");
+      await startEmulator({ skipCache: true });
+    };
 
-  const s = document.createElement("script");
-  s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-  document.body.appendChild(s);
-}
+    // Pre-cache the parts so the Service Worker can stream them instantly to the emulator.
+    async function precacheParts() {
+      if (!("caches" in window)) {
+        setHint("Cache API not available. Continuing without pre-cache.");
+        return;
+      }
 
-start();
+      const cache = await caches.open(CACHE_NAME);
 
-</script>
+      let downloaded = 0;
+      let totalKnown = 0;
+      let totalKnownReady = false;
 
+      // First pass: try to sum Content-Length for a better progress bar
+      for (const part of TRACK01_PARTS) {
+        try {
+          const head = await fetch(part, { method: "GET" });
+          const len = head.headers.get("Content-Length");
+          if (len) totalKnown += Number(len);
+        } catch {}
+      }
+      if (totalKnown > 0) totalKnownReady = true;
+
+      for (let i = 0; i < TRACK01_PARTS.length; i++) {
+        const part = TRACK01_PARTS[i];
+
+        // If already cached, skip downloading again
+        const already = await cache.match(part);
+        if (already) {
+          setStatus(`Preparing files (${i + 1}/${TRACK01_PARTS.length})...`);
+          setProgress((i + 1) / TRACK01_PARTS.length);
+          continue;
+        }
+
+        setStatus(`Downloading Track 1 part ${i + 1} of ${TRACK01_PARTS.length}...`);
+
+        const resp = await fetch(part, { cache: "no-store" });
+        if (!resp.ok) throw new Error(`Failed to download: ${part} (${resp.status})`);
+
+        // Track progress by streaming bytes when possible
+        if (resp.body) {
+          const reader = resp.body.getReader();
+          const chunks = [];
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            downloaded += value.byteLength;
+
+            if (totalKnownReady) setProgress(downloaded / totalKnown);
+            else setProgress((i + 0.2) / TRACK01_PARTS.length);
+          }
+          const combined = new Blob(chunks, { type: "application/octet-stream" });
+          const cachedResp = new Response(combined, { headers: { "Content-Type": "application/octet-stream" } });
+          await cache.put(part, cachedResp);
+        } else {
+          // Fallback if streaming is unavailable
+          await cache.put(part, resp.clone());
+          setProgress((i + 1) / TRACK01_PARTS.length);
+        }
+      }
+
+      setProgress(1);
+    }
+
+    // Service Worker that intercepts requests for Track 01.bin and streams the split parts instead.
+    async function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) {
+        setHint("Service Worker not available. This setup may not work on this browser.");
+        return;
+      }
+
+      const swCode = `
+        const CACHE_NAME = ${JSON.stringify(CACHE_NAME)};
+        const TRACK01_VIRTUAL = ${JSON.stringify(TRACK01_VIRTUAL)};
+        const TRACK01_PARTS = ${JSON.stringify(TRACK01_PARTS)};
+
+        function getFileNameFromUrl(url) {
+          try {
+            const u = new URL(url);
+            const name = u.pathname.split("/").pop();
+            return decodeURIComponent(name || "");
+          } catch {
+            return "";
+          }
+        }
+
+        async function fetchFromCacheOrNet(requestOrUrl) {
+          const cache = await caches.open(CACHE_NAME);
+          const match = await cache.match(requestOrUrl);
+          if (match) return match;
+          return fetch(requestOrUrl);
+        }
+
+        self.addEventListener("install", (event) => {
+          self.skipWaiting();
+        });
+
+        self.addEventListener("activate", (event) => {
+          event.waitUntil(self.clients.claim());
+        });
+
+        self.addEventListener("fetch", (event) => {
+          const req = event.request;
+          const name = getFileNameFromUrl(req.url);
+
+          if (name === TRACK01_VIRTUAL) {
+            event.respondWith((async () => {
+              const stream = new ReadableStream({
+                async start(controller) {
+                  try {
+                    for (const part of TRACK01_PARTS) {
+                      const resp = await fetchFromCacheOrNet(part);
+                      if (!resp.ok) throw new Error("Missing part: " + part);
+
+                      if (!resp.body) {
+                        const buf = new Uint8Array(await resp.arrayBuffer());
+                        controller.enqueue(buf);
+                        continue;
+                      }
+
+                      const reader = resp.body.getReader();
+                      while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        controller.enqueue(value);
+                      }
+                    }
+                    controller.close();
+                  } catch (e) {
+                    controller.error(e);
+                  }
+                }
+              });
+
+              return new Response(stream, {
+                headers: {
+                  "Content-Type": "application/octet-stream",
+                  "Cache-Control": "no-store"
+                }
+              });
+            })());
+            return;
+          }
+        });
+      `;
+
+      const swBlob = new Blob([swCode], { type: "text/javascript" });
+      const swUrl = URL.createObjectURL(swBlob);
+
+      const reg = await navigator.serviceWorker.register(swUrl, { scope: "./" });
+      await navigator.serviceWorker.ready;
+      return reg;
+    }
+
+    function loadEmulatorJS() {
+      // Force language to avoid en-GB.json fetch attempts
+      // EmulatorJS will use this instead of navigator.language
+      window.EJS_language = "en";
+
+      window.EJS_player = "#game";
+      window.EJS_core = "psx";
+      window.EJS_gameUrl = CUE_FILE;
+
+      if (BIOS_FILE) window.EJS_biosUrl = BIOS_FILE;
+
+      window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+
+      // Load the emulator loader
+      const s = document.createElement("script");
+      s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
+      s.onload = () => {
+        // Hide overlay after loader attaches. The core will still take a moment to boot.
+        setStatus("Starting emulator...");
+        setHint("If you see a menu, the disc did not mount. That usually means a filename mismatch or a missing file.");
+        setTimeout(() => { overlay.style.display = "none"; }, 1200);
+      };
+      s.onerror = () => showFailure("Failed to load EmulatorJS loader script.");
+      document.body.appendChild(s);
+    }
+
+    async function startEmulator(opts = {}) {
+      try {
+        retryBtn.style.display = "none";
+        skipCacheBtn.style.display = "none";
+
+        setProgress(0);
+        setStatus("Setting up loader...");
+        setHint("");
+
+        // Register SW first so any early requests can be intercepted
+        setStatus("Installing disc stitcher...");
+        await registerServiceWorker();
+
+        if (!opts.skipCache) {
+          setStatus("Preparing game files...");
+          await precacheParts();
+        }
+
+        setStatus("Booting game...");
+        setHint("First boot can take a bit. Click the game once when it appears to focus input.");
+        setProgress(1);
+
+        loadEmulatorJS();
+      } catch (e) {
+        showFailure("Load failed: " + (e && e.message ? e.message : String(e)));
+      }
+    }
+
+    // Start automatically
+    startEmulator();
+  </script>
 </body>
 </html>
