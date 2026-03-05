@@ -1,143 +1,143 @@
-FILE "Croc - Legend of the Gobbos (Europe) (Track 01).bin" BINARY
+FILE "track01.bin" BINARY
   TRACK 01 MODE1/2352
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 02).bin" BINARY
+FILE "track02.bin" BINARY
   TRACK 02 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 03).bin" BINARY
+FILE "track03.bin" BINARY
   TRACK 03 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 04).bin" BINARY
+FILE "track04.bin" BINARY
   TRACK 04 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 05).bin" BINARY
+FILE "track05.bin" BINARY
   TRACK 05 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 06).bin" BINARY
+FILE "track06.bin" BINARY
   TRACK 06 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 07).bin" BINARY
+FILE "track07.bin" BINARY
   TRACK 07 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 08).bin" BINARY
+FILE "track08.bin" BINARY
   TRACK 08 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 09).bin" BINARY
+FILE "track09.bin" BINARY
   TRACK 09 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 10).bin" BINARY
+FILE "track10.bin" BINARY
   TRACK 10 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 11).bin" BINARY
+FILE "track11.bin" BINARY
   TRACK 11 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 12).bin" BINARY
+FILE "track12.bin" BINARY
   TRACK 12 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 13).bin" BINARY
+FILE "track13.bin" BINARY
   TRACK 13 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 14).bin" BINARY
+FILE "track14.bin" BINARY
   TRACK 14 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 15).bin" BINARY
+FILE "track15.bin" BINARY
   TRACK 15 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 16).bin" BINARY
+FILE "track16.bin" BINARY
   TRACK 16 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 17).bin" BINARY
+FILE "track17.bin" BINARY
   TRACK 17 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 18).bin" BINARY
+FILE "track18.bin" BINARY
   TRACK 18 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 19).bin" BINARY
+FILE "track19.bin" BINARY
   TRACK 19 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 20).bin" BINARY
+FILE "track20.bin" BINARY
   TRACK 20 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 21).bin" BINARY
+FILE "track21.bin" BINARY
   TRACK 21 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 22).bin" BINARY
+FILE "track22.bin" BINARY
   TRACK 22 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 23).bin" BINARY
+FILE "track23.bin" BINARY
   TRACK 23 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 24).bin" BINARY
+FILE "track24.bin" BINARY
   TRACK 24 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 25).bin" BINARY
+FILE "track25.bin" BINARY
   TRACK 25 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 26).bin" BINARY
+FILE "track26.bin" BINARY
   TRACK 26 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 27).bin" BINARY
+FILE "track27.bin" BINARY
   TRACK 27 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 28).bin" BINARY
+FILE "track28.bin" BINARY
   TRACK 28 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 29).bin" BINARY
+FILE "track29.bin" BINARY
   TRACK 29 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 30).bin" BINARY
+FILE "track30.bin" BINARY
   TRACK 30 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 31).bin" BINARY
+FILE "track31.bin" BINARY
   TRACK 31 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 32).bin" BINARY
+FILE "track32.bin" BINARY
   TRACK 32 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 33).bin" BINARY
+FILE "track33.bin" BINARY
   TRACK 33 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 34).bin" BINARY
+FILE "track34.bin" BINARY
   TRACK 34 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 35).bin" BINARY
+FILE "track35.bin" BINARY
   TRACK 35 AUDIO
     INDEX 01 00:00:00
 
-FILE "Croc - Legend of the Gobbos (Europe) (Track 36).bin" BINARY
+FILE "track36.bin" BINARY
   TRACK 36 AUDIO
     INDEX 01 00:00:00

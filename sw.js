@@ -1,265 +1,150 @@
-// sw.js
-// Adds proper Range support for the stitched Track 01 virtual file.
+// Croc: Legend of the Gobbos (PS1) - Service Worker
+// Virtualizes track01.bin from split parts track01.bin.001 ... track01.bin.011
 
-const CACHE_NAME = "croc-track01-cache-v2";
-
-const TRACK01_VIRTUAL = "Croc - Legend of the Gobbos (Europe) (Track 01).bin";
-
-const TRACK01_PARTS = [
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
-  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
+const PARTS = [
+  "track01.bin.001",
+  "track01.bin.002",
+  "track01.bin.003",
+  "track01.bin.004",
+  "track01.bin.005",
+  "track01.bin.006",
+  "track01.bin.007",
+  "track01.bin.008",
+  "track01.bin.009",
+  "track01.bin.010",
+  "track01.bin.011",
 ];
 
-let sizesReady = false;
-let partSizes = [];
-let partOffsets = [];
-let totalSize = 0;
+let partSizes = null;
+let totalSize = null;
 
-function fileNameFromUrl(url) {
-  try {
-    const u = new URL(url);
-    const name = u.pathname.split("/").pop();
-    return decodeURIComponent(name || "");
-  } catch {
-    return "";
-  }
-}
+self.addEventListener("install", (e) => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
-async function headSize(url) {
-  const r = await fetch(url, { method: "HEAD", cache: "no-store" });
-  if (!r.ok) throw new Error(`HEAD failed: ${url} (${r.status})`);
-  const len = r.headers.get("Content-Length");
-  if (!len) throw new Error(`No Content-Length for: ${url}`);
-  return Number(len);
-}
-
-async function ensureSizes() {
-  if (sizesReady) return;
+async function ensureSizes(baseUrl) {
+  if (partSizes && totalSize != null) return;
 
   partSizes = [];
-  partOffsets = [];
   totalSize = 0;
 
-  for (const part of TRACK01_PARTS) {
-    const sz = await headSize(part);
-    partOffsets.push(totalSize);
-    partSizes.push(sz);
-    totalSize += sz;
+  for (const p of PARTS) {
+    const res = await fetch(new URL(p, baseUrl).toString(), { method: "HEAD" });
+    if (!res.ok) throw new Error(`Missing part: ${p} (${res.status})`);
+    const len = Number(res.headers.get("content-length") || "0");
+    if (!len) throw new Error(`No content-length for: ${p}`);
+    partSizes.push(len);
+    totalSize += len;
   }
-
-  sizesReady = true;
 }
 
 function parseRange(rangeHeader, size) {
-  // Supports: bytes=start-end OR bytes=start- OR bytes=-suffix
-  const m = /^bytes=(\d*)-(\d*)$/i.exec(rangeHeader || "");
+  // Only supports a single range: bytes=start-end
+  if (!rangeHeader) return null;
+  const m = rangeHeader.match(/bytes=(\d*)-(\d*)/i);
   if (!m) return null;
 
-  let startStr = m[1];
-  let endStr = m[2];
+  let start = m[1] === "" ? null : Number(m[1]);
+  let end = m[2] === "" ? null : Number(m[2]);
 
-  let start;
-  let end;
-
-  if (startStr === "" && endStr === "") return null;
-
-  if (startStr === "") {
-    // suffix length
-    const suffix = Number(endStr);
-    if (!Number.isFinite(suffix) || suffix <= 0) return null;
-    start = Math.max(0, size - suffix);
+  // bytes=-500 (last 500 bytes)
+  if (start === null && end !== null) {
+    start = Math.max(0, size - end);
     end = size - 1;
   } else {
-    start = Number(startStr);
-    if (!Number.isFinite(start) || start < 0) return null;
-
-    if (endStr === "") {
-      end = size - 1;
-    } else {
-      end = Number(endStr);
-      if (!Number.isFinite(end) || end < start) return null;
-      end = Math.min(end, size - 1);
-    }
+    if (start === null) start = 0;
+    if (end === null || end >= size) end = size - 1;
   }
 
-  if (start >= size) return null;
+  if (start > end || start < 0 || end < 0) return null;
   return { start, end };
 }
 
-async function fromCacheOrNet(url) {
-  const cache = await caches.open(CACHE_NAME);
-  const hit = await cache.match(url);
-  if (hit) return hit;
-  return fetch(url, { cache: "no-store" });
-}
+async function fetchRangeFromParts(baseUrl, start, end) {
+  // Build list of (partIndex, partStart, partEnd)
+  let offset = 0;
+  const slices = [];
 
-async function streamFullTrack01() {
-  return new ReadableStream({
-    async start(controller) {
-      try {
-        for (const part of TRACK01_PARTS) {
-          const resp = await fromCacheOrNet(part);
-          if (!resp.ok) throw new Error("Missing part: " + part);
+  for (let i = 0; i < PARTS.length; i++) {
+    const sz = partSizes[i];
+    const partStartGlobal = offset;
+    const partEndGlobal = offset + sz - 1;
 
-          if (!resp.body) {
-            controller.enqueue(new Uint8Array(await resp.arrayBuffer()));
-            continue;
-          }
-
-          const reader = resp.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            controller.enqueue(value);
-          }
-        }
-        controller.close();
-      } catch (e) {
-        controller.error(e);
-      }
+    if (end < partStartGlobal) break;
+    if (start > partEndGlobal) {
+      offset += sz;
+      continue;
     }
-  });
-}
 
-async function streamRangeTrack01(start, end) {
-  // Streams only the bytes requested, by mapping to part ranges.
-  await ensureSizes();
+    const s = Math.max(0, start - partStartGlobal);
+    const e = Math.min(sz - 1, end - partStartGlobal);
+    slices.push({ i, s, e });
+    offset += sz;
+  }
 
-  const length = end - start + 1;
-
-  return new ReadableStream({
-    async start(controller) {
-      try {
-        let remainingStart = start;
-        let remainingEnd = end;
-
-        for (let i = 0; i < TRACK01_PARTS.length; i++) {
-          const partStartAbs = partOffsets[i];
-          const partEndAbs = partOffsets[i] + partSizes[i] - 1;
-
-          if (remainingEnd < partStartAbs) break;
-          if (remainingStart > partEndAbs) continue;
-
-          const inPartStart = Math.max(0, remainingStart - partStartAbs);
-          const inPartEnd = Math.min(partSizes[i] - 1, remainingEnd - partStartAbs);
-
-          // Fetch exact bytes from that part using Range
-          const headers = new Headers();
-          headers.set("Range", `bytes=${inPartStart}-${inPartEnd}`);
-
-          // Try cache first. If cache response exists, we still need slicing.
-          // Easiest reliable way: do a network Range request (GitHub supports Range).
-          // If network fails, fall back to cached full + slice in memory.
-          let resp;
-          try {
-            resp = await fetch(TRACK01_PARTS[i], { headers, cache: "no-store" });
-          } catch {
-            resp = null;
-          }
-
-          if (!resp || !resp.ok) {
-            const cached = await fromCacheOrNet(TRACK01_PARTS[i]);
-            if (!cached.ok) throw new Error("Missing part: " + TRACK01_PARTS[i]);
-            const buf = await cached.arrayBuffer();
-            const slice = buf.slice(inPartStart, inPartEnd + 1);
-            controller.enqueue(new Uint8Array(slice));
-          } else {
-            if (!resp.body) {
-              controller.enqueue(new Uint8Array(await resp.arrayBuffer()));
-            } else {
-              const reader = resp.body.getReader();
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                controller.enqueue(value);
-              }
-            }
-          }
-
-          // Continue to next part if needed
-        }
-
-        controller.close();
-      } catch (e) {
-        controller.error(e);
-      }
+  const chunks = [];
+  for (const sl of slices) {
+    const url = new URL(PARTS[sl.i], baseUrl).toString();
+    const res = await fetch(url, {
+      headers: { Range: `bytes=${sl.s}-${sl.e}` },
+    });
+    if (!(res.status === 206 || res.status === 200)) {
+      throw new Error(`Range fetch failed: ${PARTS[sl.i]} (${res.status})`);
     }
-  });
-}
+    chunks.push(await res.arrayBuffer());
+  }
 
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+  return new Blob(chunks, { type: "application/octet-stream" });
+}
 
 self.addEventListener("fetch", (event) => {
-  const name = fileNameFromUrl(event.request.url);
-  if (name !== TRACK01_VIRTUAL) return;
+  const url = new URL(event.request.url);
+
+  // Only virtualize requests to track01.bin in this folder
+  if (!url.pathname.endsWith("/track01.bin")) return;
 
   event.respondWith((async () => {
-    const rangeHeader = event.request.headers.get("Range");
+    const baseUrl = url.origin + url.pathname.replace(/track01\.bin$/, "");
+    await ensureSizes(baseUrl);
 
-    // If Range requested, respond 206 with proper headers
-    if (rangeHeader) {
-      await ensureSizes();
-      const r = parseRange(rangeHeader, totalSize);
-      if (!r) {
-        return new Response(null, {
-          status: 416,
-          headers: {
-            "Content-Range": `bytes */${totalSize}`,
-            "Accept-Ranges": "bytes"
-          }
-        });
-      }
+    const range = parseRange(event.request.headers.get("Range"), totalSize);
 
-      const stream = await streamRangeTrack01(r.start, r.end);
-      const contentLength = (r.end - r.start + 1);
-
-      return new Response(stream, {
-        status: 206,
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "Accept-Ranges": "bytes",
-          "Content-Range": `bytes ${r.start}-${r.end}/${totalSize}`,
-          "Content-Length": String(contentLength),
-          "Cache-Control": "no-store"
-        }
-      });
-    }
-
-    // No Range: stream full file
-    let stream;
-    try {
-      await ensureSizes();
-      stream = await streamFullTrack01();
-      return new Response(stream, {
+    // HEAD support
+    if (event.request.method === "HEAD") {
+      return new Response(null, {
         status: 200,
         headers: {
-          "Content-Type": "application/octet-stream",
           "Accept-Ranges": "bytes",
           "Content-Length": String(totalSize),
-          "Cache-Control": "no-store"
-        }
-      });
-    } catch (e) {
-      // Still try without size calc if HEAD fails
-      stream = await streamFullTrack01();
-      return new Response(stream, {
-        status: 200,
-        headers: {
           "Content-Type": "application/octet-stream",
-          "Accept-Ranges": "bytes",
-          "Cache-Control": "no-store"
-        }
+        },
       });
     }
+
+    // Full file (rare)
+    if (!range) {
+      const blob = await fetchRangeFromParts(baseUrl, 0, totalSize - 1);
+      return new Response(blob, {
+        status: 200,
+        headers: {
+          "Accept-Ranges": "bytes",
+          "Content-Length": String(totalSize),
+          "Content-Type": "application/octet-stream",
+        },
+      });
+    }
+
+    const { start, end } = range;
+    const blob = await fetchRangeFromParts(baseUrl, start, end);
+    const len = end - start + 1;
+
+    return new Response(blob, {
+      status: 206,
+      headers: {
+        "Accept-Ranges": "bytes",
+        "Content-Range": `bytes ${start}-${end}/${totalSize}`,
+        "Content-Length": String(len),
+        "Content-Type": "application/octet-stream",
+      },
+    });
   })());
 });
