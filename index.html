@@ -11,12 +11,12 @@
 
     #overlay {
       position: fixed; inset: 0; display: grid; place-items: center;
-      background: rgba(0,0,0,0.82); z-index: 9999;
+      background: rgba(0,0,0,0.86); z-index: 9999;
     }
     #card {
       width: min(520px, 92vw);
       border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(12,12,16,0.72);
+      background: rgba(12,12,16,0.74);
       border-radius: 16px;
       padding: 16px;
       box-shadow: 0 16px 60px rgba(0,0,0,0.6);
@@ -26,18 +26,18 @@
     #top { display: flex; align-items: center; gap: 12px; }
     #spinner {
       width: 18px; height: 18px; border-radius: 999px;
-      border: 2px solid rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.22);
       border-top-color: rgba(120,220,255,0.95);
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     #title { margin: 0; font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.92); }
-    #msg { margin: 10px 0; font-size: 12px; color: rgba(255,255,255,0.72); min-height: 18px; }
+    #msg { margin: 10px 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.72); line-height: 1.35; }
     #barWrap { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.10); }
     #bar { height: 100%; width: 0%; background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95)); transition: width 0.12s ease; }
     #meta { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.55); display: flex; justify-content: space-between; gap: 10px; }
     #actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn { border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: #fff; padding: 9px 12px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 12px; user-select: none; }
+    .btn { border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: #fff; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 12px; user-select: none; }
     .btn:hover { background: rgba(255,255,255,0.12); }
     #err { margin-top: 10px; font-size: 11px; color: rgba(255,180,180,0.85); white-space: pre-wrap; display: none; }
   </style>
@@ -53,7 +53,7 @@
         <h1 id="title">Loading Croc (PS1)</h1>
       </div>
 
-      <div id="msg">Starting…</div>
+      <div id="msg">Preparing…</div>
       <div id="barWrap"><div id="bar"></div></div>
 
       <div id="meta">
@@ -62,6 +62,7 @@
       </div>
 
       <div id="actions">
+        <button class="btn" id="start" style="display:none;">Click to start</button>
         <button class="btn" id="retry" style="display:none;">Retry</button>
         <button class="btn" id="clear" style="display:none;">Clear cache</button>
       </div>
@@ -73,13 +74,13 @@
   <script>
     window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
+    // IMPORTANT: keep this exactly matching your cue file name
     const CUE_FILE = "Croc - Legend of the Gobbos (Europe).cue";
 
-    // Optional BIOS: add file and set the name if you want
-    // const BIOS_FILE = "scph5502.bin";
+    // Strongly recommended: add a PS1 BIOS file to the folder and set it here.
+    // Name it something simple like: ps1-bios.bin
+    // const BIOS_FILE = "ps1-bios.bin";
     const BIOS_FILE = "";
-
-    const CACHE_NAME = "croc-track01-cache-v2";
 
     const overlay = document.getElementById("overlay");
     const msgEl = document.getElementById("msg");
@@ -87,6 +88,7 @@
     const pctEl = document.getElementById("pct");
     const rightEl = document.getElementById("right");
     const errEl = document.getElementById("err");
+    const startBtn = document.getElementById("start");
     const retryBtn = document.getElementById("retry");
     const clearBtn = document.getElementById("clear");
 
@@ -108,99 +110,75 @@
 
     retryBtn.onclick = () => location.reload();
     clearBtn.onclick = async () => {
-      try { if ("caches" in window) await caches.delete(CACHE_NAME); } catch {}
       try {
         if ("serviceWorker" in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
           for (const r of regs) await r.unregister();
         }
       } catch {}
+      try {
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          for (const k of keys) await caches.delete(k);
+        }
+      } catch {}
       location.reload();
     };
 
-    async function registerServiceWorker() {
-      if (!("serviceWorker" in navigator)) throw new Error("Service worker not supported.");
+    async function ensureSWReady() {
+      if (!("serviceWorker" in navigator)) return;
+      // sw.js must exist as a real file in the repo
       await navigator.serviceWorker.register("./sw.js", { scope: "./" });
       await navigator.serviceWorker.ready;
     }
 
-    async function precacheTrack01Parts() {
-      // This is optional. It makes first boot smoother.
-      if (!("caches" in window)) return;
-
-      const parts = [
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
-        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
-      ];
-
-      const cache = await caches.open(CACHE_NAME);
-
-      for (let i = 0; i < parts.length; i++) {
-        const part = parts[i];
-        const hit = await cache.match(part);
-        if (hit) {
-          msgEl.textContent = "Preparing…";
-          setProgress((i + 1) / parts.length, "cached");
-          continue;
-        }
-
-        msgEl.textContent = "Downloading…";
-        setProgress(i / parts.length, `${i + 1}/${parts.length}`);
-
-        const resp = await fetch(part, { cache: "no-store" });
-        if (!resp.ok) throw new Error(`Missing or blocked: ${part} (${resp.status})`);
-
-        // Store clean binary in cache
-        const buf = await resp.arrayBuffer();
-        await cache.put(part, new Response(buf, { headers: { "Content-Type": "application/octet-stream" } }));
-      }
-
-      setProgress(1, "");
-    }
-
     function bootEmulator() {
-      // Prevent that en-GB json fetch problem
+      // Avoid the en-GB localization fetch
       window.EJS_language = "en";
 
       window.EJS_player = "#game";
       window.EJS_core = "psx";
-      window.EJS_gameUrl = CUE_FILE;
+
+      // IMPORTANT: encoded URL fixes a lot of cue/space issues
+      window.EJS_gameUrl = encodeURI(CUE_FILE);
+
       window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
-
-      if (BIOS_FILE) window.EJS_biosUrl = BIOS_FILE;
-
-      msgEl.textContent = "Starting…";
-      setProgress(1, "");
+      if (BIOS_FILE) window.EJS_biosUrl = encodeURI(BIOS_FILE);
 
       const s = document.createElement("script");
       s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
       s.onerror = () => showError("Failed to load EmulatorJS (blocked network or extension).");
-      s.onload = () => setTimeout(() => { overlay.style.display = "none"; }, 700);
+      s.onload = () => {
+        // Let the emulator build the canvas, then require a click so input/audio unlock immediately.
+        msgEl.textContent = "Ready.";
+        setProgress(1, "");
+        startBtn.style.display = "inline-block";
+        document.getElementById("spinner").style.display = "none";
+      };
       document.body.appendChild(s);
     }
+
+    startBtn.onclick = async () => {
+      // User gesture unlock
+      overlay.style.display = "none";
+      try {
+        // best-effort fullscreen
+        const el = document.documentElement;
+        if (el.requestFullscreen) await el.requestFullscreen().catch(() => {});
+      } catch {}
+    };
 
     (async () => {
       try {
         msgEl.textContent = "Starting…";
-        setProgress(0.03, "");
+        setProgress(0.10, "");
 
-        await registerServiceWorker();
-
-        msgEl.textContent = "Preparing…";
-        setProgress(0.06, "");
-
-        await precacheTrack01Parts();
+        await ensureSWReady();
+        msgEl.textContent = "Loading emulator…";
+        setProgress(0.35, "");
 
         bootEmulator();
+        setProgress(0.70, "");
       } catch (e) {
         showError((e && e.message) ? e.message : String(e));
       }
