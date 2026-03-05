@@ -14,21 +14,18 @@
       overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
-    #game {
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-    }
 
-    /* Clean, small loading UI */
+    #game { width: 100vw; height: 100vh; background: #000; }
+
     #overlay {
       position: fixed;
       inset: 0;
       display: grid;
       place-items: center;
-      background: rgba(0,0,0,0.82);
+      background: rgba(0,0,0,0.80);
       z-index: 9999;
     }
+
     #card {
       width: min(520px, 92vw);
       border: 1px solid rgba(255,255,255,0.14);
@@ -39,11 +36,13 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
-    #row {
+
+    #top {
       display: flex;
       align-items: center;
       gap: 12px;
     }
+
     #spinner {
       width: 18px;
       height: 18px;
@@ -62,12 +61,13 @@
       color: rgba(255,255,255,0.92);
       letter-spacing: 0.2px;
     }
+
     #msg {
       margin: 10px 0 10px 0;
       font-size: 12px;
       color: rgba(255,255,255,0.72);
       line-height: 1.35;
-      min-height: 32px;
+      min-height: 18px;
     }
 
     #barWrap {
@@ -77,16 +77,18 @@
       background: rgba(255,255,255,0.10);
       border: 1px solid rgba(255,255,255,0.10);
     }
+
     #bar {
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95));
       transition: width 0.12s ease;
     }
-    #pct {
+
+    #meta {
       margin-top: 8px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.62);
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
       display: flex;
       justify-content: space-between;
       gap: 10px;
@@ -98,6 +100,7 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+
     .btn {
       border: 1px solid rgba(255,255,255,0.14);
       background: rgba(255,255,255,0.08);
@@ -111,16 +114,13 @@
     }
     .btn:hover { background: rgba(255,255,255,0.12); }
 
-    #tiny {
+    #err {
       margin-top: 10px;
       font-size: 11px;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,180,180,0.85);
       line-height: 1.35;
-    }
-    #tiny code {
-      background: rgba(255,255,255,0.08);
-      padding: 1px 6px;
-      border-radius: 8px;
+      white-space: pre-wrap;
+      display: none;
     }
   </style>
 </head>
@@ -130,7 +130,7 @@
 
   <div id="overlay">
     <div id="card">
-      <div id="row">
+      <div id="top">
         <div id="spinner"></div>
         <h1 id="title">Loading Croc (PS1)</h1>
       </div>
@@ -139,29 +139,28 @@
 
       <div id="barWrap"><div id="bar"></div></div>
 
-      <div id="pct">
-        <div id="pctLeft">0%</div>
-        <div id="pctRight"></div>
+      <div id="meta">
+        <div id="pct">0%</div>
+        <div id="right"></div>
       </div>
 
       <div id="actions">
-        <button class="btn" id="retryBtn" style="display:none;">Retry</button>
-        <button class="btn" id="clearBtn" style="display:none;">Clear cache</button>
+        <button class="btn" id="retry" style="display:none;">Retry</button>
+        <button class="btn" id="clear" style="display:none;">Clear cache</button>
       </div>
 
-      <div id="tiny" id="tinyNote"></div>
+      <div id="err"></div>
     </div>
   </div>
 
   <script>
-    // Leave warning
     window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
-    // ===== MUST MATCH YOUR FILE NAMES EXACTLY =====
+    // Must match your filenames exactly
     const CUE_FILE = "Croc - Legend of the Gobbos (Europe).cue";
     const TRACK01_VIRTUAL = "Croc - Legend of the Gobbos (Europe) (Track 01).bin";
 
-    // Your screenshot shows .001 through .011
+    // Your Track 01 split parts (.001 to .011)
     const TRACK01_PARTS = [
       "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
       "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
@@ -176,30 +175,33 @@
       "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
     ];
 
-    // Optional BIOS (recommended): put it in the same folder and set this.
-    // Example: const BIOS_FILE = "scph5502.bin";
+    // Optional BIOS (recommended). Put it in the folder and set the name here:
+    // const BIOS_FILE = "scph5502.bin";
     const BIOS_FILE = "";
 
-    const CACHE_NAME = "croc-track01-parts-v3";
+    const CACHE_NAME = "croc-track01-cache-v1";
+
     const overlay = document.getElementById("overlay");
     const msgEl = document.getElementById("msg");
     const barEl = document.getElementById("bar");
-    const pctLeft = document.getElementById("pctLeft");
-    const pctRight = document.getElementById("pctRight");
-    const retryBtn = document.getElementById("retryBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const tiny = document.getElementById("tiny");
+    const pctEl = document.getElementById("pct");
+    const rightEl = document.getElementById("right");
+    const errEl = document.getElementById("err");
+    const retryBtn = document.getElementById("retry");
+    const clearBtn = document.getElementById("clear");
 
-    function setMsg(t) { msgEl.textContent = t; }
-    function setPct(p, rightText) {
+    function setProgress(p, rightText) {
       const clamped = Math.max(0, Math.min(1, p));
       const pct = Math.floor(clamped * 100);
       barEl.style.width = pct + "%";
-      pctLeft.textContent = pct + "%";
-      pctRight.textContent = rightText || "";
+      pctEl.textContent = pct + "%";
+      rightEl.textContent = rightText || "";
     }
 
-    function showButtons() {
+    function showError(message) {
+      msgEl.textContent = "Load failed.";
+      errEl.style.display = "block";
+      errEl.textContent = message;
       retryBtn.style.display = "inline-block";
       clearBtn.style.display = "inline-block";
     }
@@ -216,194 +218,79 @@
       location.reload();
     };
 
-    function hardFail(text, detail) {
-      setMsg(text);
-      setPct(0, "");
-      tiny.textContent = detail || "";
-      showButtons();
-    }
-
-    // IMPORTANT: service workers do not run on file://
-    if (location.protocol === "file:") {
-      hardFail(
-        "This cannot run from a local file.",
-        'Open it from GitHub Pages or a local server. Example: run "python -m http.server 8000" then open http://localhost:8000'
-      );
-      throw new Error("Blocked: file protocol");
-    }
-
-    async function registerSW() {
-      if (!("serviceWorker" in navigator)) {
-        throw new Error("Service Worker not supported.");
-      }
-
-      const swCode = `
-        const CACHE_NAME = ${JSON.stringify(CACHE_NAME)};
-        const TRACK01_VIRTUAL = ${JSON.stringify(TRACK01_VIRTUAL)};
-        const TRACK01_PARTS = ${JSON.stringify(TRACK01_PARTS)};
-
-        function fileName(url) {
-          try {
-            const u = new URL(url);
-            const name = u.pathname.split("/").pop();
-            return decodeURIComponent(name || "");
-          } catch { return ""; }
-        }
-
-        async function fromCacheOrNet(url) {
-          const cache = await caches.open(CACHE_NAME);
-          const hit = await cache.match(url);
-          if (hit) return hit;
-          return fetch(url);
-        }
-
-        self.addEventListener("install", () => self.skipWaiting());
-        self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
-
-        self.addEventListener("fetch", (event) => {
-          const name = fileName(event.request.url);
-          if (name !== TRACK01_VIRTUAL) return;
-
-          event.respondWith((async () => {
-            const stream = new ReadableStream({
-              async start(controller) {
-                try {
-                  for (const part of TRACK01_PARTS) {
-                    const resp = await fromCacheOrNet(part);
-                    if (!resp.ok) throw new Error("Missing part: " + part);
-
-                    if (!resp.body) {
-                      controller.enqueue(new Uint8Array(await resp.arrayBuffer()));
-                      continue;
-                    }
-
-                    const reader = resp.body.getReader();
-                    while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) break;
-                      controller.enqueue(value);
-                    }
-                  }
-                  controller.close();
-                } catch (err) {
-                  controller.error(err);
-                }
-              }
-            });
-
-            return new Response(stream, {
-              headers: {
-                "Content-Type": "application/octet-stream",
-                "Cache-Control": "no-store"
-              }
-            });
-          })());
-        });
-      `;
-
-      const swBlob = new Blob([swCode], { type: "text/javascript" });
-      const swUrl = URL.createObjectURL(swBlob);
-
-      await navigator.serviceWorker.register(swUrl, { scope: "./" });
+    async function registerServiceWorker() {
+      if (!("serviceWorker" in navigator)) throw new Error("Service worker not supported.");
+      // IMPORTANT: sw.js must exist in the repo as a real file
+      await navigator.serviceWorker.register("./sw.js", { scope: "./" });
       await navigator.serviceWorker.ready;
     }
 
     async function precacheParts() {
       if (!("caches" in window)) return;
-
       const cache = await caches.open(CACHE_NAME);
-
-      let total = 0;
-      let totalOk = false;
-
-      // Best-effort total size estimate (not required)
-      try {
-        for (const part of TRACK01_PARTS) {
-          const r = await fetch(part, { method: "GET", cache: "no-store" });
-          const len = r.headers.get("Content-Length");
-          if (len) total += Number(len);
-        }
-        if (total > 0) totalOk = true;
-      } catch {}
-
-      let downloaded = 0;
 
       for (let i = 0; i < TRACK01_PARTS.length; i++) {
         const part = TRACK01_PARTS[i];
-
         const hit = await cache.match(part);
         if (hit) {
-          setMsg(`Preparing (${i + 1}/${TRACK01_PARTS.length})`);
-          setPct((i + 1) / TRACK01_PARTS.length, "cached");
+          msgEl.textContent = "Preparing files…";
+          setProgress((i + 1) / TRACK01_PARTS.length, "cached");
           continue;
         }
 
-        setMsg(`Downloading (${i + 1}/${TRACK01_PARTS.length})`);
-        setPct(i / TRACK01_PARTS.length, "");
+        msgEl.textContent = "Downloading…";
+        setProgress(i / TRACK01_PARTS.length, `${i + 1}/${TRACK01_PARTS.length}`);
 
         const resp = await fetch(part, { cache: "no-store" });
-        if (!resp.ok) throw new Error(`Failed: ${part} (${resp.status})`);
+        if (!resp.ok) throw new Error(`Missing or blocked: ${part} (${resp.status})`);
 
-        if (resp.body) {
-          const reader = resp.body.getReader();
-          const chunks = [];
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            chunks.push(value);
-            downloaded += value.byteLength;
-            if (totalOk) setPct(downloaded / total, "");
-          }
-          const blob = new Blob(chunks, { type: "application/octet-stream" });
-          await cache.put(part, new Response(blob, { headers: { "Content-Type": "application/octet-stream" } }));
-        } else {
-          await cache.put(part, resp.clone());
-        }
+        // Store a clean binary response in cache
+        const buf = await resp.arrayBuffer();
+        await cache.put(part, new Response(buf, { headers: { "Content-Type": "application/octet-stream" } }));
       }
 
-      setMsg("Starting emulator…");
-      setPct(1, "");
+      setProgress(1, "");
     }
 
     function bootEmulator() {
-      // Prevent localization fetch weirdness
+      // Force simple language so it does not try to load en-GB localization json
       window.EJS_language = "en";
 
       window.EJS_player = "#game";
       window.EJS_core = "psx";
       window.EJS_gameUrl = CUE_FILE;
+      window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
 
       if (BIOS_FILE) window.EJS_biosUrl = BIOS_FILE;
 
-      window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+      msgEl.textContent = "Starting…";
+      setProgress(1, "");
 
       const s = document.createElement("script");
       s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-      s.onerror = () => hardFail("Emulator loader failed to load.", "Check your network or ad blockers.");
+      s.onerror = () => showError("Failed to load EmulatorJS loader.js (blocked network or extension).");
       s.onload = () => {
-        // hide after loader attaches, game may still boot a bit
-        setMsg("Almost there…");
-        setTimeout(() => { overlay.style.display = "none"; }, 900);
+        // Hide UI shortly after the loader attaches
+        msgEl.textContent = "Starting…";
+        setTimeout(() => { overlay.style.display = "none"; }, 700);
       };
       document.body.appendChild(s);
     }
 
     (async () => {
       try {
-        setMsg("Setting up…");
-        setPct(0.02, "");
+        msgEl.textContent = "Starting…";
+        setProgress(0.02, "");
 
-        await registerSW();
-        setMsg("Preparing files…");
-        setPct(0.05, "");
+        await registerServiceWorker(); // this will fetch ./sw.js
+        msgEl.textContent = "Preparing files…";
+        setProgress(0.05, "");
 
-        await precacheParts();
-        bootEmulator();
+        await precacheParts(); // this will fetch Track01 parts if not cached
+
+        bootEmulator(); // this will fetch the CDN loader.js and then the cue/tracks
       } catch (e) {
-        hardFail(
-          "Load failed.",
-          (e && e.message) ? e.message : String(e)
-        );
+        showError((e && e.message) ? e.message : String(e));
       }
     })();
   </script>
