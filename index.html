@@ -4,28 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Croc: Legend of the Gobbos (PS1)</title>
-
   <style>
     :root { color-scheme: dark; }
-    html, body {
-      height: 100%;
-      margin: 0;
-      background: #000;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
-
+    html, body { height: 100%; margin: 0; background: #000; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
     #game { width: 100vw; height: 100vh; background: #000; }
 
     #overlay {
-      position: fixed;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      background: rgba(0,0,0,0.80);
-      z-index: 9999;
+      position: fixed; inset: 0; display: grid; place-items: center;
+      background: rgba(0,0,0,0.82); z-index: 9999;
     }
-
     #card {
       width: min(520px, 92vw);
       border: 1px solid rgba(255,255,255,0.14);
@@ -36,92 +23,23 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
-
-    #top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    #top { display: flex; align-items: center; gap: 12px; }
     #spinner {
-      width: 18px;
-      height: 18px;
-      border-radius: 999px;
+      width: 18px; height: 18px; border-radius: 999px;
       border: 2px solid rgba(255,255,255,0.25);
       border-top-color: rgba(120,220,255,0.95);
       animation: spin 0.8s linear infinite;
-      flex: 0 0 auto;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    #title {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 800;
-      color: rgba(255,255,255,0.92);
-      letter-spacing: 0.2px;
-    }
-
-    #msg {
-      margin: 10px 0 10px 0;
-      font-size: 12px;
-      color: rgba(255,255,255,0.72);
-      line-height: 1.35;
-      min-height: 18px;
-    }
-
-    #barWrap {
-      height: 10px;
-      border-radius: 999px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.10);
-    }
-
-    #bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95));
-      transition: width 0.12s ease;
-    }
-
-    #meta {
-      margin-top: 8px;
-      font-size: 11px;
-      color: rgba(255,255,255,0.55);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    #actions {
-      margin-top: 12px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      padding: 9px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 800;
-      font-size: 12px;
-      user-select: none;
-    }
+    #title { margin: 0; font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.92); }
+    #msg { margin: 10px 0; font-size: 12px; color: rgba(255,255,255,0.72); min-height: 18px; }
+    #barWrap { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.10); }
+    #bar { height: 100%; width: 0%; background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95)); transition: width 0.12s ease; }
+    #meta { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.55); display: flex; justify-content: space-between; gap: 10px; }
+    #actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: #fff; padding: 9px 12px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 12px; user-select: none; }
     .btn:hover { background: rgba(255,255,255,0.12); }
-
-    #err {
-      margin-top: 10px;
-      font-size: 11px;
-      color: rgba(255,180,180,0.85);
-      line-height: 1.35;
-      white-space: pre-wrap;
-      display: none;
-    }
+    #err { margin-top: 10px; font-size: 11px; color: rgba(255,180,180,0.85); white-space: pre-wrap; display: none; }
   </style>
 </head>
 
@@ -136,7 +54,6 @@
       </div>
 
       <div id="msg">Starting…</div>
-
       <div id="barWrap"><div id="bar"></div></div>
 
       <div id="meta">
@@ -156,30 +73,13 @@
   <script>
     window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
-    // Must match your filenames exactly
     const CUE_FILE = "Croc - Legend of the Gobbos (Europe).cue";
-    const TRACK01_VIRTUAL = "Croc - Legend of the Gobbos (Europe) (Track 01).bin";
 
-    // Your Track 01 split parts (.001 to .011)
-    const TRACK01_PARTS = [
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
-      "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
-    ];
-
-    // Optional BIOS (recommended). Put it in the folder and set the name here:
+    // Optional BIOS: add file and set the name if you want
     // const BIOS_FILE = "scph5502.bin";
     const BIOS_FILE = "";
 
-    const CACHE_NAME = "croc-track01-cache-v1";
+    const CACHE_NAME = "croc-track01-cache-v2";
 
     const overlay = document.getElementById("overlay");
     const msgEl = document.getElementById("msg");
@@ -220,31 +120,46 @@
 
     async function registerServiceWorker() {
       if (!("serviceWorker" in navigator)) throw new Error("Service worker not supported.");
-      // IMPORTANT: sw.js must exist in the repo as a real file
       await navigator.serviceWorker.register("./sw.js", { scope: "./" });
       await navigator.serviceWorker.ready;
     }
 
-    async function precacheParts() {
+    async function precacheTrack01Parts() {
+      // This is optional. It makes first boot smoother.
       if (!("caches" in window)) return;
+
+      const parts = [
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
+        "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
+      ];
+
       const cache = await caches.open(CACHE_NAME);
 
-      for (let i = 0; i < TRACK01_PARTS.length; i++) {
-        const part = TRACK01_PARTS[i];
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
         const hit = await cache.match(part);
         if (hit) {
-          msgEl.textContent = "Preparing files…";
-          setProgress((i + 1) / TRACK01_PARTS.length, "cached");
+          msgEl.textContent = "Preparing…";
+          setProgress((i + 1) / parts.length, "cached");
           continue;
         }
 
         msgEl.textContent = "Downloading…";
-        setProgress(i / TRACK01_PARTS.length, `${i + 1}/${TRACK01_PARTS.length}`);
+        setProgress(i / parts.length, `${i + 1}/${parts.length}`);
 
         const resp = await fetch(part, { cache: "no-store" });
         if (!resp.ok) throw new Error(`Missing or blocked: ${part} (${resp.status})`);
 
-        // Store a clean binary response in cache
+        // Store clean binary in cache
         const buf = await resp.arrayBuffer();
         await cache.put(part, new Response(buf, { headers: { "Content-Type": "application/octet-stream" } }));
       }
@@ -253,7 +168,7 @@
     }
 
     function bootEmulator() {
-      // Force simple language so it does not try to load en-GB localization json
+      // Prevent that en-GB json fetch problem
       window.EJS_language = "en";
 
       window.EJS_player = "#game";
@@ -268,27 +183,24 @@
 
       const s = document.createElement("script");
       s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-      s.onerror = () => showError("Failed to load EmulatorJS loader.js (blocked network or extension).");
-      s.onload = () => {
-        // Hide UI shortly after the loader attaches
-        msgEl.textContent = "Starting…";
-        setTimeout(() => { overlay.style.display = "none"; }, 700);
-      };
+      s.onerror = () => showError("Failed to load EmulatorJS (blocked network or extension).");
+      s.onload = () => setTimeout(() => { overlay.style.display = "none"; }, 700);
       document.body.appendChild(s);
     }
 
     (async () => {
       try {
         msgEl.textContent = "Starting…";
-        setProgress(0.02, "");
+        setProgress(0.03, "");
 
-        await registerServiceWorker(); // this will fetch ./sw.js
-        msgEl.textContent = "Preparing files…";
-        setProgress(0.05, "");
+        await registerServiceWorker();
 
-        await precacheParts(); // this will fetch Track01 parts if not cached
+        msgEl.textContent = "Preparing…";
+        setProgress(0.06, "");
 
-        bootEmulator(); // this will fetch the CDN loader.js and then the cue/tracks
+        await precacheTrack01Parts();
+
+        bootEmulator();
       } catch (e) {
         showError((e && e.message) ? e.message : String(e));
       }
