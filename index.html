@@ -1,73 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Croc: Legend of the Gobbos (PS1)</title>
-  <link rel="icon" href="data:," />
+  <link rel="icon" href="data:,">
   <style>
-    :root { color-scheme: dark; }
-    html, body { height: 100%; margin: 0; background: #000; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    #game { width: 100vw; height: 100vh; background: #000; }
-
-    #overlay {
-      position: fixed; inset: 0; display: grid; place-items: center;
-      background: rgba(0,0,0,0.86); z-index: 9999;
-    }
-    #card {
-      width: min(520px, 92vw);
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(12,12,16,0.74);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 16px 60px rgba(0,0,0,0.6);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    #top { display: flex; align-items: center; gap: 12px; }
-    #spinner {
-      width: 18px; height: 18px; border-radius: 999px;
-      border: 2px solid rgba(255,255,255,0.22);
-      border-top-color: rgba(120,220,255,0.95);
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #title { margin: 0; font-size: 14px; font-weight: 800; color: rgba(255,255,255,0.92); }
-    #msg { margin: 10px 0 12px 0; font-size: 12px; color: rgba(255,255,255,0.72); line-height: 1.35; }
-    #barWrap { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.10); }
-    #bar { height: 100%; width: 0%; background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95)); transition: width 0.12s ease; }
-    #meta { margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.55); display: flex; justify-content: space-between; gap: 10px; }
-    #actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .btn { border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.08); color: #fff; padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 12px; user-select: none; }
-    .btn:hover { background: rgba(255,255,255,0.12); }
-    #err { margin-top: 10px; font-size: 11px; color: rgba(255,180,180,0.85); white-space: pre-wrap; display: none; }
+    html,body{height:100%;margin:0;background:#000;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    #game{width:100vw;height:100vh;background:#000}
+    #overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.86);z-index:9}
+    #box{width:min(520px,92vw);border:1px solid rgba(255,255,255,.14);background:rgba(12,12,16,.74);border-radius:16px;padding:16px}
+    #row{display:flex;align-items:center;gap:10px}
+    #sp{width:16px;height:16px;border-radius:999px;border:2px solid rgba(255,255,255,.22);border-top-color:rgba(120,220,255,.95);animation:s .8s linear infinite}
+    @keyframes s{to{transform:rotate(360deg)}}
+    #msg{margin:10px 0 12px 0;font-size:12px;color:rgba(255,255,255,.75)}
+    #barw{height:10px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.10)}
+    #bar{height:100%;width:0%;background:linear-gradient(90deg,rgba(70,100,255,.95),rgba(120,220,255,.95));transition:width .12s ease}
+    #err{margin-top:10px;font-size:11px;color:rgba(255,180,180,.9);white-space:pre-wrap;display:none}
+    #btn{margin-top:12px;display:none;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);color:#fff;padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:800;font-size:12px}
+    #btn:hover{background:rgba(255,255,255,.12)}
   </style>
 </head>
-
 <body>
   <div id="game"></div>
 
   <div id="overlay">
-    <div id="card">
-      <div id="top">
-        <div id="spinner"></div>
-        <h1 id="title">Loading Croc (PS1)</h1>
-      </div>
-
+    <div id="box">
+      <div id="row"><div id="sp"></div><div style="font-weight:800;font-size:13px;color:rgba(255,255,255,.92)">Loading Croc (PS1)</div></div>
       <div id="msg">Starting…</div>
-      <div id="barWrap"><div id="bar"></div></div>
-
-      <div id="meta">
-        <div id="pct">0%</div>
-        <div id="right"></div>
-      </div>
-
-      <div id="actions">
-        <button class="btn" id="start" style="display:none;">Click to play</button>
-        <button class="btn" id="retry" style="display:none;">Retry</button>
-        <button class="btn" id="clear" style="display:none;">Clear cache</button>
-      </div>
-
+      <div id="barw"><div id="bar"></div></div>
+      <button id="btn">Click to play</button>
       <div id="err"></div>
     </div>
   </div>
@@ -75,104 +37,75 @@
   <script>
     window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
-    const CUE_FILE = "croc.cue";
-
-    // Recommended: add a BIOS file to improve boot reliability.
-    // Put it in this folder and name it exactly this:
-    // const BIOS_FILE = "ps1-bios.bin";
-    const BIOS_FILE = "";
+    const CUE = "croc.cue"; // must exist in the same folder as this index.html
 
     const overlay = document.getElementById("overlay");
-    const msgEl = document.getElementById("msg");
-    const barEl = document.getElementById("bar");
-    const pctEl = document.getElementById("pct");
-    const rightEl = document.getElementById("right");
-    const errEl = document.getElementById("err");
-    const startBtn = document.getElementById("start");
-    const retryBtn = document.getElementById("retry");
-    const clearBtn = document.getElementById("clear");
+    const msg = document.getElementById("msg");
+    const bar = document.getElementById("bar");
+    const err = document.getElementById("err");
+    const btn = document.getElementById("btn");
 
-    function setProgress(p, rightText) {
-      const clamped = Math.max(0, Math.min(1, p));
-      const pct = Math.floor(clamped * 100);
-      barEl.style.width = pct + "%";
-      pctEl.textContent = pct + "%";
-      rightEl.textContent = rightText || "";
+    function setP(p){bar.style.width=Math.max(0,Math.min(1,p))*100+"%";}
+
+    async function probeCue() {
+      // FORCE the browser to request the cue so you can see it in Network.
+      const u = new URL(CUE, location.href).toString();
+      msg.textContent = "Checking cue…";
+      setP(0.25);
+
+      const head = await fetch(u, { method: "HEAD", cache: "no-store" });
+      if (!head.ok) throw new Error("Cue HEAD failed: " + head.status + " " + head.statusText);
+
+      const get = await fetch(u, { method: "GET", cache: "no-store" });
+      if (!get.ok) throw new Error("Cue GET failed: " + get.status + " " + get.statusText);
+
+      msg.textContent = "Cue OK.";
+      setP(0.45);
     }
 
-    function showError(message) {
-      msgEl.textContent = "Load failed.";
-      errEl.style.display = "block";
-      errEl.textContent = message;
-      retryBtn.style.display = "inline-block";
-      clearBtn.style.display = "inline-block";
-      document.getElementById("spinner").style.display = "none";
-    }
-
-    retryBtn.onclick = () => location.reload();
-    clearBtn.onclick = async () => {
-      try {
-        if ("serviceWorker" in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          for (const r of regs) await r.unregister();
-        }
-      } catch {}
-      try {
-        if ("caches" in window) {
-          const keys = await caches.keys();
-          for (const k of keys) await caches.delete(k);
-        }
-      } catch {}
-      location.reload();
-    };
-
-    async function ensureSWReady() {
-      if (!("serviceWorker" in navigator)) return;
-      await navigator.serviceWorker.register("./sw.js", { scope: "./" });
-      await navigator.serviceWorker.ready;
-    }
-
-    function bootEmulator() {
-      window.EJS_language = "en";
+    function boot() {
+      // EmulatorJS config MUST be on window BEFORE loader.js runs
       window.EJS_player = "#game";
       window.EJS_core = "psx";
-      window.EJS_gameUrl = encodeURI(CUE_FILE);
+      window.EJS_gameUrl = CUE;
       window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
-      if (BIOS_FILE) window.EJS_biosUrl = encodeURI(BIOS_FILE);
+      window.EJS_language = "en";
+
+      msg.textContent = "Loading emulator…";
+      setP(0.75);
 
       const s = document.createElement("script");
       s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-      s.onerror = () => showError("Failed to load EmulatorJS (blocked network or extension).");
+      s.onerror = () => fail("Failed to load EmulatorJS loader.js");
       s.onload = () => {
-        msgEl.textContent = "Ready.";
-        setProgress(1, "");
-        startBtn.style.display = "inline-block";
-        document.getElementById("spinner").style.display = "none";
+        msg.textContent = "Ready.";
+        setP(1);
+        btn.style.display = "inline-block";
       };
       document.body.appendChild(s);
     }
 
-    startBtn.onclick = async () => {
+    function fail(t){
+      msg.textContent = "Load failed.";
+      err.style.display = "block";
+      err.textContent = t;
+      btn.style.display = "inline-block";
+      btn.textContent = "Retry";
+      btn.onclick = () => location.reload();
+      document.getElementById("sp").style.display = "none";
+    }
+
+    btn.onclick = async () => {
       overlay.style.display = "none";
-      try {
-        const el = document.documentElement;
-        if (el.requestFullscreen) await el.requestFullscreen().catch(() => {});
-      } catch {}
+      try { await document.documentElement.requestFullscreen?.(); } catch {}
     };
 
     (async () => {
       try {
-        msgEl.textContent = "Starting…";
-        setProgress(0.15, "");
-
-        await ensureSWReady();
-        msgEl.textContent = "Loading…";
-        setProgress(0.55, "");
-
-        bootEmulator();
-        setProgress(0.85, "");
+        await probeCue();      // <- if this runs, you WILL see cue requests in Network
+        boot();                // <- then EmulatorJS will request cue again and then tracks
       } catch (e) {
-        showError((e && e.message) ? e.message : String(e));
+        fail(e?.message || String(e));
       }
     })();
   </script>
