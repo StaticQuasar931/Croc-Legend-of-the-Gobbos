@@ -14,103 +14,113 @@
       overflow: hidden;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     }
-
     #game {
       width: 100vw;
       height: 100vh;
       background: #000;
     }
 
-    /* Loading overlay */
+    /* Clean, small loading UI */
     #overlay {
       position: fixed;
       inset: 0;
       display: grid;
       place-items: center;
-      background: radial-gradient(1200px 800px at 50% 20%, rgba(70,100,255,0.16), rgba(0,0,0,0.92));
+      background: rgba(0,0,0,0.82);
       z-index: 9999;
     }
-
-    #panel {
-      width: min(720px, 92vw);
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.55);
+    #card {
+      width: min(520px, 92vw);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(12,12,16,0.72);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 16px 60px rgba(0,0,0,0.6);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      border-radius: 18px;
-      padding: 18px 18px 14px 18px;
-      box-shadow: 0 18px 70px rgba(0,0,0,0.6);
     }
+    #row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: rgba(120,220,255,0.95);
+      animation: spin 0.8s linear infinite;
+      flex: 0 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     #title {
-      font-size: 18px;
+      margin: 0;
+      font-size: 14px;
       font-weight: 800;
-      color: #fff;
-      margin: 0 0 10px 0;
+      color: rgba(255,255,255,0.92);
       letter-spacing: 0.2px;
     }
-
-    #status {
-      font-size: 13px;
-      color: rgba(255,255,255,0.86);
+    #msg {
       margin: 10px 0 10px 0;
-      line-height: 1.4;
+      font-size: 12px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.35;
+      min-height: 32px;
     }
 
     #barWrap {
-      height: 12px;
+      height: 10px;
       border-radius: 999px;
       overflow: hidden;
       background: rgba(255,255,255,0.10);
       border: 1px solid rgba(255,255,255,0.10);
     }
-
     #bar {
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, rgba(70,100,255,0.95), rgba(120,220,255,0.95));
-      border-radius: 999px;
-      transition: width 0.15s ease;
+      transition: width 0.12s ease;
     }
-
-    #small {
-      margin-top: 10px;
+    #pct {
+      margin-top: 8px;
       font-size: 12px;
-      color: rgba(255,255,255,0.72);
-      line-height: 1.5;
+      color: rgba(255,255,255,0.62);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    #small code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
-    }
-
-    #btnRow {
+    #actions {
       margin-top: 12px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
     }
-
     .btn {
       border: 1px solid rgba(255,255,255,0.14);
       background: rgba(255,255,255,0.08);
       color: #fff;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border-radius: 12px;
       cursor: pointer;
-      font-weight: 700;
-      font-size: 13px;
+      font-weight: 800;
+      font-size: 12px;
       user-select: none;
     }
     .btn:hover { background: rgba(255,255,255,0.12); }
 
-    #hint {
+    #tiny {
       margin-top: 10px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.70);
-      line-height: 1.4;
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.35;
+    }
+    #tiny code {
+      background: rgba(255,255,255,0.08);
+      padding: 1px 6px;
+      border-radius: 8px;
     }
   </style>
 </head>
@@ -118,40 +128,40 @@
 <body>
   <div id="game"></div>
 
-  <div id="overlay" aria-live="polite">
-    <div id="panel">
-      <h1 id="title">Loading Croc: Legend of the Gobbos (PS1)</h1>
-
-      <div id="status">
-        Track 1 is split into parts due to file-size limits. This page must download and stitch Track 1 before the PS1 emulator can boot.
+  <div id="overlay">
+    <div id="card">
+      <div id="row">
+        <div id="spinner"></div>
+        <h1 id="title">Loading Croc (PS1)</h1>
       </div>
+
+      <div id="msg">Starting…</div>
 
       <div id="barWrap"><div id="bar"></div></div>
 
-      <div id="small">
-        Input will feel dead during loading. That is normal.<br>
-        When the game appears, click it once to focus keyboard input.<br>
-        If you see a menu instead of the game, the disc did not mount (usually a missing file or a filename mismatch).
+      <div id="pct">
+        <div id="pctLeft">0%</div>
+        <div id="pctRight"></div>
       </div>
 
-      <div id="btnRow">
+      <div id="actions">
         <button class="btn" id="retryBtn" style="display:none;">Retry</button>
-        <button class="btn" id="clearBtn" style="display:none;">Clear cache and retry</button>
+        <button class="btn" id="clearBtn" style="display:none;">Clear cache</button>
       </div>
 
-      <div id="hint"></div>
+      <div id="tiny" id="tinyNote"></div>
     </div>
   </div>
 
   <script>
-    // Reload/leave warning
+    // Leave warning
     window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
     // ===== MUST MATCH YOUR FILE NAMES EXACTLY =====
     const CUE_FILE = "Croc - Legend of the Gobbos (Europe).cue";
     const TRACK01_VIRTUAL = "Croc - Legend of the Gobbos (Europe) (Track 01).bin";
 
-    // You have .001 through .011 in your screenshot
+    // Your screenshot shows .001 through .011
     const TRACK01_PARTS = [
       "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
       "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
@@ -166,37 +176,38 @@
       "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
     ];
 
-    // Optional BIOS (recommended for PS1). Put it in the same folder and set the name here.
-    // Example: "scph5502.bin"
+    // Optional BIOS (recommended): put it in the same folder and set this.
+    // Example: const BIOS_FILE = "scph5502.bin";
     const BIOS_FILE = "";
 
-    const CACHE_NAME = "croc-track01-parts-v2";
-
+    const CACHE_NAME = "croc-track01-parts-v3";
     const overlay = document.getElementById("overlay");
-    const statusEl = document.getElementById("status");
-    const hintEl = document.getElementById("hint");
+    const msgEl = document.getElementById("msg");
     const barEl = document.getElementById("bar");
+    const pctLeft = document.getElementById("pctLeft");
+    const pctRight = document.getElementById("pctRight");
     const retryBtn = document.getElementById("retryBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const tiny = document.getElementById("tiny");
 
-    function setStatus(msg) { statusEl.textContent = msg; }
-    function setHint(msg) { hintEl.textContent = msg || ""; }
-    function setProgress(p) {
+    function setMsg(t) { msgEl.textContent = t; }
+    function setPct(p, rightText) {
       const clamped = Math.max(0, Math.min(1, p));
-      barEl.style.width = (clamped * 100).toFixed(1) + "%";
+      const pct = Math.floor(clamped * 100);
+      barEl.style.width = pct + "%";
+      pctLeft.textContent = pct + "%";
+      pctRight.textContent = rightText || "";
     }
 
-    function fail(msg) {
-      setStatus(msg);
-      setHint("Common causes: a missing Track file, a filename mismatch, or the host blocking large downloads.");
+    function showButtons() {
       retryBtn.style.display = "inline-block";
       clearBtn.style.display = "inline-block";
     }
 
     retryBtn.onclick = () => location.reload();
     clearBtn.onclick = async () => {
+      try { if ("caches" in window) await caches.delete(CACHE_NAME); } catch {}
       try {
-        if ("caches" in window) await caches.delete(CACHE_NAME);
         if ("serviceWorker" in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
           for (const r of regs) await r.unregister();
@@ -205,17 +216,110 @@
       location.reload();
     };
 
+    function hardFail(text, detail) {
+      setMsg(text);
+      setPct(0, "");
+      tiny.textContent = detail || "";
+      showButtons();
+    }
+
+    // IMPORTANT: service workers do not run on file://
+    if (location.protocol === "file:") {
+      hardFail(
+        "This cannot run from a local file.",
+        'Open it from GitHub Pages or a local server. Example: run "python -m http.server 8000" then open http://localhost:8000'
+      );
+      throw new Error("Blocked: file protocol");
+    }
+
+    async function registerSW() {
+      if (!("serviceWorker" in navigator)) {
+        throw new Error("Service Worker not supported.");
+      }
+
+      const swCode = `
+        const CACHE_NAME = ${JSON.stringify(CACHE_NAME)};
+        const TRACK01_VIRTUAL = ${JSON.stringify(TRACK01_VIRTUAL)};
+        const TRACK01_PARTS = ${JSON.stringify(TRACK01_PARTS)};
+
+        function fileName(url) {
+          try {
+            const u = new URL(url);
+            const name = u.pathname.split("/").pop();
+            return decodeURIComponent(name || "");
+          } catch { return ""; }
+        }
+
+        async function fromCacheOrNet(url) {
+          const cache = await caches.open(CACHE_NAME);
+          const hit = await cache.match(url);
+          if (hit) return hit;
+          return fetch(url);
+        }
+
+        self.addEventListener("install", () => self.skipWaiting());
+        self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+
+        self.addEventListener("fetch", (event) => {
+          const name = fileName(event.request.url);
+          if (name !== TRACK01_VIRTUAL) return;
+
+          event.respondWith((async () => {
+            const stream = new ReadableStream({
+              async start(controller) {
+                try {
+                  for (const part of TRACK01_PARTS) {
+                    const resp = await fromCacheOrNet(part);
+                    if (!resp.ok) throw new Error("Missing part: " + part);
+
+                    if (!resp.body) {
+                      controller.enqueue(new Uint8Array(await resp.arrayBuffer()));
+                      continue;
+                    }
+
+                    const reader = resp.body.getReader();
+                    while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) break;
+                      controller.enqueue(value);
+                    }
+                  }
+                  controller.close();
+                } catch (err) {
+                  controller.error(err);
+                }
+              }
+            });
+
+            return new Response(stream, {
+              headers: {
+                "Content-Type": "application/octet-stream",
+                "Cache-Control": "no-store"
+              }
+            });
+          })());
+        });
+      `;
+
+      const swBlob = new Blob([swCode], { type: "text/javascript" });
+      const swUrl = URL.createObjectURL(swBlob);
+
+      await navigator.serviceWorker.register(swUrl, { scope: "./" });
+      await navigator.serviceWorker.ready;
+    }
+
     async function precacheParts() {
       if (!("caches" in window)) return;
 
       const cache = await caches.open(CACHE_NAME);
 
-      // Try to estimate total bytes for nicer progress
       let total = 0;
       let totalOk = false;
+
+      // Best-effort total size estimate (not required)
       try {
         for (const part of TRACK01_PARTS) {
-          const r = await fetch(part, { cache: "no-store" });
+          const r = await fetch(part, { method: "GET", cache: "no-store" });
           const len = r.headers.get("Content-Length");
           if (len) total += Number(len);
         }
@@ -229,15 +333,16 @@
 
         const hit = await cache.match(part);
         if (hit) {
-          setStatus(`Preparing files (${i + 1}/${TRACK01_PARTS.length})...`);
-          setProgress((i + 1) / TRACK01_PARTS.length);
+          setMsg(`Preparing (${i + 1}/${TRACK01_PARTS.length})`);
+          setPct((i + 1) / TRACK01_PARTS.length, "cached");
           continue;
         }
 
-        setStatus(`Downloading Track 1 part ${i + 1} of ${TRACK01_PARTS.length}...`);
+        setMsg(`Downloading (${i + 1}/${TRACK01_PARTS.length})`);
+        setPct(i / TRACK01_PARTS.length, "");
 
         const resp = await fetch(part, { cache: "no-store" });
-        if (!resp.ok) throw new Error(`Failed to download: ${part} (${resp.status})`);
+        if (!resp.ok) throw new Error(`Failed: ${part} (${resp.status})`);
 
         if (resp.body) {
           const reader = resp.body.getReader();
@@ -247,99 +352,21 @@
             if (done) break;
             chunks.push(value);
             downloaded += value.byteLength;
-            if (totalOk) setProgress(downloaded / total);
-            else setProgress((i + 0.15) / TRACK01_PARTS.length);
+            if (totalOk) setPct(downloaded / total, "");
           }
           const blob = new Blob(chunks, { type: "application/octet-stream" });
           await cache.put(part, new Response(blob, { headers: { "Content-Type": "application/octet-stream" } }));
         } else {
           await cache.put(part, resp.clone());
-          setProgress((i + 1) / TRACK01_PARTS.length);
         }
       }
 
-      setProgress(1);
-    }
-
-    async function registerSW() {
-      if (!("serviceWorker" in navigator)) throw new Error("Service Worker not supported in this browser.");
-
-      const swCode = `
-        const CACHE_NAME = ${JSON.stringify(CACHE_NAME)};
-        const TRACK01_VIRTUAL = ${JSON.stringify(TRACK01_VIRTUAL)};
-        const TRACK01_PARTS = ${JSON.stringify(TRACK01_PARTS)};
-
-        function fileName(url) {
-          try {
-            const u = new URL(url);
-            const name = u.pathname.split("/").pop();
-            return decodeURIComponent(name || "");
-          } catch {
-            return "";
-          }
-        }
-
-        async function fromCacheOrNet(url) {
-          const cache = await caches.open(CACHE_NAME);
-          const hit = await cache.match(url);
-          if (hit) return hit;
-          return fetch(url);
-        }
-
-        self.addEventListener("install", () => self.skipWaiting());
-        self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
-
-        self.addEventListener("fetch", (event) => {
-          const name = fileName(event.request.url);
-
-          if (name === TRACK01_VIRTUAL) {
-            event.respondWith((async () => {
-              const stream = new ReadableStream({
-                async start(controller) {
-                  try {
-                    for (const part of TRACK01_PARTS) {
-                      const resp = await fromCacheOrNet(part);
-                      if (!resp.ok) throw new Error("Missing part: " + part);
-
-                      if (!resp.body) {
-                        controller.enqueue(new Uint8Array(await resp.arrayBuffer()));
-                        continue;
-                      }
-
-                      const reader = resp.body.getReader();
-                      while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        controller.enqueue(value);
-                      }
-                    }
-                    controller.close();
-                  } catch (e) {
-                    controller.error(e);
-                  }
-                }
-              });
-
-              return new Response(stream, {
-                headers: {
-                  "Content-Type": "application/octet-stream",
-                  "Cache-Control": "no-store"
-                }
-              });
-            })());
-          }
-        });
-      `;
-
-      const blob = new Blob([swCode], { type: "text/javascript" });
-      const url = URL.createObjectURL(blob);
-
-      await navigator.serviceWorker.register(url, { scope: "./" });
-      await navigator.serviceWorker.ready;
+      setMsg("Starting emulator…");
+      setPct(1, "");
     }
 
     function bootEmulator() {
-      // Prevent the broken localization fetch by forcing language
+      // Prevent localization fetch weirdness
       window.EJS_language = "en";
 
       window.EJS_player = "#game";
@@ -352,37 +379,33 @@
 
       const s = document.createElement("script");
       s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-      s.onerror = () => fail("Failed to load the emulator loader.");
+      s.onerror = () => hardFail("Emulator loader failed to load.", "Check your network or ad blockers.");
       s.onload = () => {
-        setStatus("Starting emulator...");
-        setHint("If you see a menu, a track file is missing or named differently than the .cue expects.");
-        setTimeout(() => { overlay.style.display = "none"; }, 1200);
+        // hide after loader attaches, game may still boot a bit
+        setMsg("Almost there…");
+        setTimeout(() => { overlay.style.display = "none"; }, 900);
       };
       document.body.appendChild(s);
     }
 
-    async function start() {
+    (async () => {
       try {
-        setProgress(0);
-        setStatus("Installing disc stitcher...");
-        setHint("");
+        setMsg("Setting up…");
+        setPct(0.02, "");
 
         await registerSW();
+        setMsg("Preparing files…");
+        setPct(0.05, "");
 
-        setStatus("Downloading and preparing Track 1 parts...");
         await precacheParts();
-
-        setStatus("Booting game...");
-        setHint("Loading can take a while on Chromebooks. Click the game once when it appears.");
-        setProgress(1);
-
         bootEmulator();
       } catch (e) {
-        fail("Load failed: " + (e && e.message ? e.message : String(e)));
+        hardFail(
+          "Load failed.",
+          (e && e.message) ? e.message : String(e)
+        );
       }
-    }
-
-    start();
+    })();
   </script>
 </body>
 </html>
