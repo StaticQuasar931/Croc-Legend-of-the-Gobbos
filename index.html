@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Croc: Legend of the Gobbos (PS1)</title>
+  <link rel="icon" href="data:," />
   <style>
     :root { color-scheme: dark; }
     html, body { height: 100%; margin: 0; background: #000; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
@@ -53,7 +54,7 @@
         <h1 id="title">Loading Croc (PS1)</h1>
       </div>
 
-      <div id="msg">Preparing…</div>
+      <div id="msg">Starting…</div>
       <div id="barWrap"><div id="bar"></div></div>
 
       <div id="meta">
@@ -62,7 +63,7 @@
       </div>
 
       <div id="actions">
-        <button class="btn" id="start" style="display:none;">Click to start</button>
+        <button class="btn" id="start" style="display:none;">Click to play</button>
         <button class="btn" id="retry" style="display:none;">Retry</button>
         <button class="btn" id="clear" style="display:none;">Clear cache</button>
       </div>
@@ -74,11 +75,10 @@
   <script>
     window.onbeforeunload = () => "Leave the game? Progress may be lost.";
 
-    // IMPORTANT: keep this exactly matching your cue file name
-    const CUE_FILE = "Croc - Legend of the Gobbos (Europe).cue";
+    const CUE_FILE = "croc.cue";
 
-    // Strongly recommended: add a PS1 BIOS file to the folder and set it here.
-    // Name it something simple like: ps1-bios.bin
+    // Recommended: add a BIOS file to improve boot reliability.
+    // Put it in this folder and name it exactly this:
     // const BIOS_FILE = "ps1-bios.bin";
     const BIOS_FILE = "";
 
@@ -106,6 +106,7 @@
       errEl.textContent = message;
       retryBtn.style.display = "inline-block";
       clearBtn.style.display = "inline-block";
+      document.getElementById("spinner").style.display = "none";
     }
 
     retryBtn.onclick = () => location.reload();
@@ -127,21 +128,15 @@
 
     async function ensureSWReady() {
       if (!("serviceWorker" in navigator)) return;
-      // sw.js must exist as a real file in the repo
       await navigator.serviceWorker.register("./sw.js", { scope: "./" });
       await navigator.serviceWorker.ready;
     }
 
     function bootEmulator() {
-      // Avoid the en-GB localization fetch
       window.EJS_language = "en";
-
       window.EJS_player = "#game";
       window.EJS_core = "psx";
-
-      // IMPORTANT: encoded URL fixes a lot of cue/space issues
       window.EJS_gameUrl = encodeURI(CUE_FILE);
-
       window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
       if (BIOS_FILE) window.EJS_biosUrl = encodeURI(BIOS_FILE);
 
@@ -149,7 +144,6 @@
       s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
       s.onerror = () => showError("Failed to load EmulatorJS (blocked network or extension).");
       s.onload = () => {
-        // Let the emulator build the canvas, then require a click so input/audio unlock immediately.
         msgEl.textContent = "Ready.";
         setProgress(1, "");
         startBtn.style.display = "inline-block";
@@ -159,10 +153,8 @@
     }
 
     startBtn.onclick = async () => {
-      // User gesture unlock
       overlay.style.display = "none";
       try {
-        // best-effort fullscreen
         const el = document.documentElement;
         if (el.requestFullscreen) await el.requestFullscreen().catch(() => {});
       } catch {}
@@ -171,14 +163,14 @@
     (async () => {
       try {
         msgEl.textContent = "Starting…";
-        setProgress(0.10, "");
+        setProgress(0.15, "");
 
         await ensureSWReady();
-        msgEl.textContent = "Loading emulator…";
-        setProgress(0.35, "");
+        msgEl.textContent = "Loading…";
+        setProgress(0.55, "");
 
         bootEmulator();
-        setProgress(0.70, "");
+        setProgress(0.85, "");
       } catch (e) {
         showError((e && e.message) ? e.message : String(e));
       }
