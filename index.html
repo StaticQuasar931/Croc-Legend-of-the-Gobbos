@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Croc: Legend of the Gobbos</title>
+
+<style>
+html,body{
+  margin:0;
+  height:100%;
+  background:#000;
+  overflow:hidden;
+}
+
+#game{
+  width:100vw;
+  height:100vh;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game"></div>
+
+<script>
+
+EJS_player = "#game";
+EJS_core = "psx";
+EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+
+async function combineTrack01(){
+
+  const parts = [
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.001",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.002",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.003",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.004",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.005",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.006",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.007",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.008",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.009",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.010",
+  "Croc - Legend of the Gobbos (Europe) (Track 01).bin.011"
+  ];
+
+  let buffers = [];
+
+  for(const p of parts){
+    const r = await fetch(p);
+    buffers.push(await r.arrayBuffer());
+  }
+
+  const size = buffers.reduce((a,b)=>a+b.byteLength,0);
+  const combined = new Uint8Array(size);
+
+  let offset = 0;
+  for(const b of buffers){
+    combined.set(new Uint8Array(b), offset);
+    offset += b.byteLength;
+  }
+
+  return combined.buffer;
+}
+
+async function start(){
+
+  const track01 = await combineTrack01();
+
+  const file = new File([track01], "Croc - Legend of the Gobbos (Europe) (Track 01).bin");
+
+  EJS_gameUrl = "Croc - Legend of the Gobbos (Europe).cue";
+
+  window.EJS_files = {
+    "Croc - Legend of the Gobbos (Europe) (Track 01).bin": file
+  };
+
+  const s = document.createElement("script");
+  s.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
+  document.body.appendChild(s);
+}
+
+start();
+
+</script>
+
+</body>
+</html>
